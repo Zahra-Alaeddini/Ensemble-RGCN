@@ -313,7 +313,7 @@ for fold, result in enumerate(fold_results):
 
 print(f"\nAverage Results: Precision: {avg_results[0]:.4f}, Recall: {avg_results[1]:.4f}, F1-Score: {avg_results[2]:.4f}, Accuracy: {avg_results[3]:.4f}, ROC AUC: {avg_results[4]:.4f}")
 
-predicted_labels = test_scores.cpu().tensor.detach().numpy()
+predicted_labels = test_scores.cpu().detach().numpy()
 true_labels = test_labels.cpu().numpy()
 
 # Use the test set's source and destination nodes
