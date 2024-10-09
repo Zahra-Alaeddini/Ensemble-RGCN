@@ -153,7 +153,7 @@ for fold, (train_idx, test_idx) in enumerate(kf.split(target_links)):
     optimizer = torch.optim.AdamW(list(encoder.parameters()) + list(decoder.parameters()), lr=0.001)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10, verbose=True)
     criterion = nn.BCELoss()
-    num_epochs = 150
+    num_epochs = 200
     early_stopping_patience = 20
 
     best_val_accuracy = 0
@@ -224,7 +224,6 @@ def plot_final_roc_curve(fpr_list, tpr_list, mean_fpr):
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.title('Final Averaged ROC Curve')
-    plt.legend(loc='lower right')
     plt.show()
 
 # Function to save results to a CSV file
