@@ -105,13 +105,20 @@ class SimplEDecoder(nn.Module):
 class HolEDecoder(nn.Module):
     def __init__(self, out_dim, num_rels):
         super(HolEDecoder, self).__init__()
-        self.rel_embeddings = nn.Embedding(num_rels, out_dim)
+        self.rel_embeddings = nn.Embedding(num_rels, out_dim).to(device)
+
+    def circular_correlation(self, a, b):
+        # Circular correlation via FFT (Fast Fourier Transform)
+        a_fft = torch.fft.fft(a, dim=-1)
+        b_fft = torch.fft.fft(b, dim=-1)
+        c_fft = a_fft * torch.conj(b_fft)
+        c = torch.fft.ifft(c_fft, dim=-1).real
+        return c
 
     def forward(self, src_embeds, dst_embeds, rel_types):
         rel_embeds = self.rel_embeddings(rel_types)
-        combined_embeds = src_embeds * dst_embeds  
-        real_score = torch.sum(combined_embeds * rel_embeds, dim=1)
-        scores = torch.sigmoid(real_score)
+        correlation = self.circular_correlation(src_embeds, dst_embeds)
+        scores = torch.sigmoid(torch.sum(correlation * rel_embeds, dim=1))
         return scores
 
 def create_target_links(G, adj_matrix):
