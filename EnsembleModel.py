@@ -14,17 +14,17 @@ from itertools import cycle
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load edge lists that obtained after running creating_edgelists.ipynb
-disease_metabolic_df = pd.read_csv('disease_metabolite_edgelist.csv')
+disease_metabolite_df = pd.read_csv('disease_metabolite_edgelist.csv')
 disease_microbe_df = pd.read_csv('disease_microbe_edgelist.csv')
 metabolite_gene_df = pd.read_csv('metabolite_gene_edgelist.csv')
 
 # Check column names and add 'RelationType' if missing
-for df in [disease_metabolic_df, disease_microbe_df, metabolite_gene_df]:
+for df in [disease_metabolite_df, disease_microbe_df, metabolite_gene_df]:
     if 'RelationType' not in df.columns:
         df['RelationType'] = df.apply(lambda row: f"{row['Source']}_{row['Target']}", axis=1)
 
 # Combine all edge lists into one DataFrame
-combined_edgelist_df = pd.concat([disease_metabolic_df, disease_microbe_df, metabolite_gene_df], ignore_index=True)
+combined_edgelist_df = pd.concat([disease_metabolite_df, disease_microbe_df, metabolite_gene_df], ignore_index=True)
 
 # Create a directed graph from the combined edge list
 G = nx.from_pandas_edgelist(combined_edgelist_df, source='Source', target='Target', create_using=nx.DiGraph)
