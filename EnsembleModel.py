@@ -91,21 +91,26 @@ class DistMultDecoder(nn.Module):
 class SimplEDecoder(nn.Module):
     def __init__(self, out_dim, num_rels):
         super(SimplEDecoder, self).__init__()
-        self.rel_embeddings = nn.Embedding(num_rels, out_dim).to(device)
+        self.rel_embeddings = nn.Embedding(num_rels, out_dim).to(device)  
+        self.rel_inv_embeddings = nn.Embedding(num_rels, out_dim).to(device)  
 
     def forward(self, src_embeds, dst_embeds, rel_types):
-        rel_embeds = self.rel_embeddings(rel_types)
-        scores = torch.sigmoid(torch.sum(src_embeds * rel_embeds * dst_embeds, dim=1))
+        rel_embeds = self.rel_embeddings(rel_types)  
+        rel_inv_embeds = self.rel_inv_embeddings(rel_types) 
+        score_1 = torch.sum(src_embeds * rel_embeds * dst_embeds, dim=1)
+        score_2 = torch.sum(dst_embeds * rel_inv_embeds * src_embeds, dim=1)
+        scores = torch.sigmoid((score_1 + score_2) / 2)
         return scores
 
 class HolEDecoder(nn.Module):
     def __init__(self, out_dim, num_rels):
         super(HolEDecoder, self).__init__()
-        self.rel_embeddings = nn.Embedding(num_rels, out_dim).to(device)
+        self.rel_embeddings = nn.Embedding(num_rels, out_dim)
 
     def forward(self, src_embeds, dst_embeds, rel_types):
         rel_embeds = self.rel_embeddings(rel_types)
-        real_score = torch.sum(src_embeds * dst_embeds * rel_embeds, dim=1)
+        combined_embeds = src_embeds * dst_embeds  
+        real_score = torch.sum(combined_embeds * rel_embeds, dim=1)
         scores = torch.sigmoid(real_score)
         return scores
 
@@ -181,7 +186,7 @@ for fold, (train_idx, test_idx) in enumerate(kf.split(target_links)):
     optimizer = torch.optim.AdamW(list(encoder.parameters()) + [param for decoder in decoders for param in decoder.parameters()], lr=0.001)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10, verbose=True)
     criterion = nn.BCELoss()
-    num_epochs = 150
+    num_epochs = 200
     early_stopping_patience = 20
 
     best_val_accuracy = 0
@@ -280,7 +285,6 @@ def plot_final_roc_curve(fpr_list, tpr_list, mean_fpr):
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.title('Final Averaged ROC Curve')
-    plt.legend(loc='lower right')
     plt.show()
 
 def save_results(results, filename='fold_results.csv'):
